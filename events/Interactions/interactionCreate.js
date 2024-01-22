@@ -8,7 +8,7 @@ client.on("interactionCreate", async (interaction) => {
     /////////////////////////////
     if (interaction.isCommand()) {
         await interaction.deferReply({ ephemeral: false }).catch(() => {});
-
+//developer by tn_hazem
         const cmd = client.slashCommands.get(interaction.commandName);
         if (!cmd)
             return interaction.followUp({ content: "An error has occured " });
@@ -25,7 +25,7 @@ client.on("interactionCreate", async (interaction) => {
             } else if (option.value) args.push(option.value);
         }
         interaction.member = interaction.guild.members.cache.get(interaction.user.id);
-
+//developer by tn_hazem
       /////////////////////////////
      /// userPermission Handler ///
      /////////////////////////////
@@ -55,7 +55,7 @@ client.on("interactionCreate", async (interaction) => {
       const roleId = interaction.values[0];
       const role = interaction.guild.roles.cache.get(roleId)
       const memberRoles = interaction.member.roles;
-      
+      //developer by tn_hazem
       const hasRole = memberRoles.cache.has(roleId);
 
       if(hasRole) {
@@ -80,3 +80,4 @@ client.on("interactionCreate", async (interaction) => {
     }
 })
 
+//developer by tn_hazem

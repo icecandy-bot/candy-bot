@@ -15,7 +15,7 @@ module.exports = {
      */
     run: async (client, interaction, args) => {
       const user = await client.users.fetch(interaction.targetId);
-      
+
       const embed = new MessageEmbed()
         .setTitle('Avatar Image')
         .setColor(ec.color)
@@ -24,7 +24,7 @@ module.exports = {
         .setTimestamp();
 
       interaction.followUp({ 
-        content: `${user.tag}'s Avatar`, 
+        content: `${user.tag}的頭像`, 
         embeds: [embed] });
     },
 };

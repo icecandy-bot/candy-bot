@@ -9,9 +9,9 @@ client.on("messageCreate", async (message) => {
         message.author.bot ||
         !message.guild ||
         !message.content.toLowerCase().startsWith(prefix)
-    )
+    )//developer by tn_hazem
         return;
-
+//developer by tn_hazem
     const [cmd, ...args] = message.content
         .slice(prefix.length)
         .trim()
@@ -28,7 +28,7 @@ client.on("messageCreate", async (message) => {
           .setColor(ec.wrong)
           .setDescription(`🚫 ${message.author}, You don't have permissions to use this command!`)
           return message.reply({ embeds: [userPerms] })
-      }
+      }//developer by tn_hazem
   }
 
   ////////////////////////////////
@@ -40,6 +40,6 @@ client.on("messageCreate", async (message) => {
       .setTitle('Your On Cooldown')
       .setDescription(`> ❌ Please wait ${onCoolDown(message, command)} more Second(s) before reusing the ${command.name} command.`)
       return message.channel.send({embeds : [cool]})
-    }
+    }//developer by tn_hazem
     await command.run(client, message, args);
 });

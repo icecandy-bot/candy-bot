@@ -1,5 +1,9 @@
 module.exports = {
     // EMOJIS SETTINGS //
+    coins:"<:icons_coin:1145456934670041149>",
+     text:"<:icons_text1:1147218555792789605>", 
+     damss:"<:eg_pQFSFremium:1147219476685795349>",
+    // EMOJIS normal //
     tick: "✅",
     diamond: "💎",
     clock: "⏰",

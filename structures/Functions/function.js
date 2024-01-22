@@ -5,7 +5,7 @@ const { Client, Message, MessageEmbed , Collection} = require('discord.js');
  * @param {Message} message 
  * @param {String[]} args 
  */
-
+//developer by tn_hazem
 
 module.exports.escapeRegex = escapeRegex;
 module.exports.onCoolDown = onCoolDown;
@@ -15,7 +15,7 @@ function escapeRegex(str) {
         return str.replace(/[.*+?^${}()|[\]\\]/g, `\\$&`);
     } catch (e) {
         console.log(String(e.stack).bgRed);
-    }
+    }//developer by tn_hazem
 }
 
 /**
@@ -58,4 +58,4 @@ function escapeRegex(str) {
       //return false aka not on cooldown
       return false;
     }
-  }
+  }//developer by tn_hazem

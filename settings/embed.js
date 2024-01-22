@@ -3,7 +3,7 @@ module.exports = {
     color: "#55FF33",
     footer: "ADD TEXT HERE",
     iconURL: "",
-    image: "https://i.imgur.com/HdyCdWI.gif",
+    image: "",
 
     // EMBED COLORS //
     wrong: "#FF0000",
@@ -20,4 +20,4 @@ module.exports = {
     blurple: "Blurple",
     clear: "#2e3137",
     green: "#55FF33"
-}
+} 

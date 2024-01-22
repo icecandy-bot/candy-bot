@@ -1,7 +1,4 @@
 {
-    "token": "MTAxMDYyMTg3NzEwODA5NzA4NQ.G_nlGH.32zP5df3ieR33w3fI8YBoBE_t2Mor01Z-nNvzM",
-    "prefix": "!",
-    "channel": "1057730209056559174",
-    "messageTemplate": "Hello @everyone, **{author}** just now uploaded a video **{title}**!\n{url}",
-    "channel_id": "UCAmyXLeFVdtUrfIIvzwVO1Q"
+    "token": "",
+    "prefix": "c!"
 }

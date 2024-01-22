@@ -1,97 +1,196 @@
-const Discord = require("discord.js");
-const SQLite = require("better-sqlite3");
-const sql = new SQLite('./mainDB.sqlite');
-const { MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
+                  const Discord = require("discord.js");
+                  const SQLite = require("better-sqlite3");
+                  const sql = new SQLite('./mainDB.sqlite');
+                  const { MessageEmbed, MessageActionRow, MessageButton } = require('discord.js');
 
-module.exports = {
-    name: "level-leaderboard",
-    category: "level",
-    description: "Check top 10 users with the most xp and the highest level",
-    options: [
-        {
-            name: 'page',
-            description: 'Page to display',
-            type: 3,
-            required: false,
-        },
-    ],
+                  module.exports = {
+                    name: "leaderboard",
+                    category: "level",
+                    description: "查看前 10 名經驗值和最高等級的使用者",
+                    options: [
+                      {
+                        name: 'page',
+                        description: '要顯示的頁面',
+                        type: 3,
+                        required: false,
+                      },
+                    ],
+                    run: async (client, interaction, page) => {
+                      let currentPage = parseInt(page || interaction.options.getString('page')) || 1;
+                      const top10 = sql.prepare("SELECT * FROM levels WHERE guild = ? ORDER BY totalXP DESC;").all(interaction.guild.id);
+                      const itemsPerPage = 10;
+                      const startIdx = (currentPage - 1) * itemsPerPage;
+                      const endIdx = startIdx + itemsPerPage;
+                      const usersToShow = top10.slice(startIdx, endIdx);
+                      const embed = new MessageEmbed()
+                        .setAuthor(`${interaction.guild.name} 排行榜`, interaction.guild.iconURL() || null)
+                        .setTimestamp()
+                        .setColor("RANDOM");
 
-    run: async (client, interaction) => {
-        const currentPage = parseInt(interaction.options.getString('page')) || 1;
-        const top10 = sql.prepare("SELECT * FROM levels WHERE guild = ? ORDER BY totalXP DESC;").all(interaction.guild.id);
-        const itemsPerPage = 10;
-        const pages = Math.ceil(top10.length / itemsPerPage);
+                      if (usersToShow.length < 1) {
+                        embed.setDescription(`排行榜中沒有使用者！`);
+                      } else {
+                        const leftColumn = [];
+                        const rightColumn = [];
 
-        if (currentPage < 1 || currentPage > pages) {
-            return interaction.editReply(`Invalid page number! There are only ${pages} pages.`);
-        }
+                        usersToShow.forEach((user, index) => {
+                          const rank = startIdx + index + 1;
+                          const nextXP = user.level * 2 * 250 + 250;
+                          const userTag = interaction.client.users.cache.get(user.user)?.tag || `<@!${user.user}>`;
+                          const field = `#${rank}. ${userTag}\n> **等級**: \`${user.level}\`\n> **經驗值**: \`${user.xp} / ${nextXP}\``;
 
-        const startIdx = (currentPage - 1) * itemsPerPage;
-        const endIdx = startIdx + itemsPerPage;
-        const usersToShow = top10.slice(startIdx, endIdx);
+                          if (index < 5) {
+                            leftColumn.push(field);
+                          } else {
+                            rightColumn.push(field);
+                          }
+                        });
 
-        const embed = new MessageEmbed()
-            .setTitle(`${interaction.guild.name} Ranking`)
-            .setColor("RANDOM")
-            .setTimestamp()
-            .setDescription(`Top 10 Leaderboard`);
+                        for (let i = 0; i < Math.max(leftColumn.length, rightColumn.length); i++) {
+                          const leftEntry = leftColumn[i] || '\u200B';
+                          const rightEntry = rightColumn[i] || '\u200B';
 
-        if (usersToShow.length < 1) {
-            embed.setDescription(`There are no users in the leaderboard!`);
-        } else {
-            usersToShow.forEach((user, index) => {
-                const rank = startIdx + index + 1;
-                const nextXP = user.level * 2 * 250 + 250;
-
-                const userTag = client.users.cache.get(user.user)?.tag || `<@!${user.user}>`;
-
-                embed.addFields({ name: `#${rank}. ${userTag}`, value: `> **Level**: \`${user.level}\`\n> **XP**: \`${user.xp} / ${nextXP}\`` });
-            });
-
-            embed.setFooter(`Page ${currentPage} / ${pages}`);
-
-            const previousButton = new MessageButton()
-                .setCustomId('previous')
-                .setLabel('Previous')
-                .setStyle('PRIMARY')
-                .setDisabled(currentPage === 1);
-
-            const nextButton = new MessageButton()
-                .setCustomId('next')
-                .setLabel('Next')
-                .setStyle('PRIMARY')
-                .setDisabled(currentPage === pages);
-
-            const row = new MessageActionRow()
-                .addComponents(previousButton, nextButton);
-
-                return interaction.editReply({ embeds: [embed], components: [row], fetchReply: true })
-                .then(reply => {
-                    const collector = reply.createMessageComponentCollector({ componentType: 'BUTTON', time: 60000 });
-
-                    collector.on('collect', async (button) => {
-                        if (button.customId === 'previous') {
-                            currentPage > 1 && await button.deferUpdate();
-                            await handlePageChange(client, interaction, currentPage - 1);
-                        } else if (button.customId === 'next') {
-                            currentPage < pages && await button.deferUpdate();
-                            await handlePageChange(client, interaction, currentPage + 1);
+                          embed.addFields(
+                            { name: '\u200B', value: leftEntry, inline: true },
+                            { name: '\u200B', value: rightEntry, inline: true }
+                          );
                         }
-                    });
+                      }
 
-                    collector.on('end', () => {
-                        row.components.forEach(component => component.setDisabled(true));
-                        reply.edit({ embeds: [embed], components: [row] });
-                    });
-                })
-                .catch(console.error);
-        }
-    }
-};
+                      const row = new MessageActionRow().addComponents(
+                        new MessageButton()
+                          .setLabel('首頁')
+                          .setStyle('PRIMARY')
+                          .setCustomId('start_button'),
+                        new MessageButton()
+                          .setLabel('上一頁')
+                          .setStyle('PRIMARY')
+                          .setCustomId('previous_button'),
+                        new MessageButton()
+                          .setStyle('SECONDARY')
+                          .setCustomId('page')
+                          .setLabel(`${currentPage}/${Math.ceil(top10.length / itemsPerPage)}`)
+                          .setDisabled(true),
+                        new MessageButton()
+                          .setLabel('下一頁')
+                          .setStyle('PRIMARY')
+                          .setCustomId('next_button'),
+                        new MessageButton()
+                          .setLabel('末頁')
+                          .setStyle('PRIMARY')
+                          .setCustomId('end_button')
+                      );
 
-async function handlePageChange(client, interaction, newPage) {
-    const command = client.commands.get('rankleaderboard');
-    if (command) {
-        await command.run(client, interaction, newPage);
-    }
-}
+                      await interaction.followUp({ embeds: [embed], components: [row] });
+
+                      const filter = (i) => i.user.id === interaction.user.id;
+                      const collector = interaction.channel.createMessageComponentCollector({ filter, time: 120000 });
+
+                      collector.on('collect', async (interaction) => {
+                        if (interaction.customId === 'previous_button') {
+                          currentPage--;
+                        } else if (interaction.customId === 'next_button') {
+                          currentPage++;
+                        } else if (interaction.customId === 'start_button') {
+                          currentPage = 1;
+                        } else if (interaction.customId === 'end_button') {
+                          currentPage = Math.ceil(top10.length / itemsPerPage);
+                        }
+
+                        const startIdx = (currentPage - 1) * itemsPerPage;
+                        const endIdx = startIdx + itemsPerPage;
+                        const usersToShow = top10.slice(startIdx, endIdx);
+                        const embed = new MessageEmbed()
+                          .setAuthor(`${interaction.guild.name} 排行榜`, interaction.guild.iconURL() || null)
+                          .setTimestamp()
+                          .setColor("RANDOM");
+
+                        if (usersToShow.length < 1) {
+                          embed.setDescription(`排行榜中沒有使用者！`);
+                        } else {
+                          const leftColumn = [];
+                          const rightColumn = [];
+
+                          usersToShow.forEach((user, index) => {
+                            const rank = startIdx + index + 1;
+                            const nextXP = user.level * 2 * 250 + 250;
+                            const userTag = interaction.client.users.cache.get(user.user)?.tag || `<@!${user.user}>`;
+                            const field = `#${rank}. ${userTag}\n> **等級**: \`${user.level}\`\n> **經驗值**: \`${user.xp} / ${nextXP}\``;
+
+                            if (index < 5) {
+                              leftColumn.push(field);
+                            } else {
+                              rightColumn.push(field);
+                            }
+                          });
+
+                          for (let i = 0; i < Math.max(leftColumn.length, rightColumn.length); i++) {
+                            const leftEntry = leftColumn[i] || '\u200B';
+                            const rightEntry = rightColumn[i] || '\u200B';
+
+                            embed.addFields(
+                              { name: '\u200B', value: leftEntry, inline: true },
+                              { name: '\u200B', value: rightEntry, inline: true }
+                            );
+                          }
+                        }
+
+                        const row = new MessageActionRow().addComponents(
+                          new MessageButton()
+                            .setLabel('首頁')
+                            .setStyle('PRIMARY')
+                            .setCustomId('start_button'),
+                          new MessageButton()
+                            .setLabel('上一頁')
+                            .setStyle('PRIMARY')
+                            .setCustomId('previous_button'),
+                          new MessageButton()
+                            .setStyle('SECONDARY')
+                            .setCustomId('page')
+                            .setLabel(`${currentPage}/${Math.ceil(top10.length / itemsPerPage)}`)
+                            .setDisabled(true),
+                          new MessageButton()
+                            .setLabel('下一頁')
+                            .setStyle('PRIMARY')
+                            .setCustomId('next_button'),
+                          new MessageButton()
+                            .setLabel('末頁')
+                            .setStyle('PRIMARY')
+                            .setCustomId('end_button')
+                        );
+                        await interaction.update({ embeds: [embed], components: [row] });
+                      });
+
+                      collector.on('end', async () => {
+                        const row = new MessageActionRow().addComponents(
+                          new MessageButton()
+                            .setLabel('首頁')
+                            .setStyle('PRIMARY')
+                            .setCustomId('start_button')
+                            .setDisabled(true),
+                          new MessageButton()
+                            .setLabel('上一頁')
+                            .setStyle('PRIMARY')
+                            .setDisabled(true)
+                            .setCustomId('previous_button'),
+                          new MessageButton()
+                            .setStyle('SECONDARY')
+                            .setCustomId('page')
+                            .setLabel(`${currentPage}/${Math.ceil(top10.length / itemsPerPage)}`)
+                            .setDisabled(true),
+                          new MessageButton()
+                            .setLabel('下一頁')
+                            .setStyle('PRIMARY')
+                            .setCustomId('next_button')
+                            .setDisabled(true),
+                          new MessageButton()
+                            .setLabel('末頁')
+                            .setStyle('PRIMARY')
+                            .setCustomId('end_button')
+                            .setDisabled(true)
+                        );
+
+                        await interaction.editReply({ components: [row] });
+                      });
+                    },
+                  };
